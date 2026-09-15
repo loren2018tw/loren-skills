@@ -1,0 +1,4 @@
+interface:
+  display_name: "建立 Obsidian 快閃卡"
+  short_description: "將筆記轉換為有效且受支援的快閃卡"
+  default_prompt: "使用 $create-flashcards 從這些 Obsidian 筆記建立有效的快閃卡。"

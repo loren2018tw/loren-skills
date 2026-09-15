@@ -4,26 +4,32 @@ Use these principles when selecting and writing cards.
 
 ## Evidence-backed principles
 
-# 動態派卡規則
+# Dynamic card-assignment rules
 
-請評估提取出的核心概念屬於以下哪種類型，並對應產出卡片：
+Assess which type the extracted core concept belongs to, and produce cards
+accordingly:
 
-1. 【事實/單詞/名詞類】（僅需 2-3 張卡）
+1. [Fact / word / noun type] (only 2-3 cards needed)
 
-   - 卡1 (What): 核心定義或功能。
+   - Card 1 (What): the core definition or function.
 
-   - 卡2 (Context/Reverse): 出現的場景或反向識別。
+   - Card 2 (Context/Reverse): the scenario where it appears, or reverse
+     identification.
 
-2. 【機制/流程/技術類】（需 4-5 張卡）
+2. [Mechanism / process / technique type] (4-5 cards needed)
 
-   - 卡1 (What & Why): 定義與它為了解決什麼痛點。
+   - Card 1 (What & Why): the definition and the pain point it solves.
 
-   - 卡2 (How): 核心步驟、組成要素。
+   - Card 2 (How): the core steps or constituent parts.
 
-   - 卡3 (Example): 經典的正面應用案例。
+   - Card 3 (Example): a classic positive application case.
 
-   - 卡4 (Boundary): 常見的錯誤用法、或失效的特殊條件。
+   - Card 4 (Boundary): common misuse, or the special conditions under which
+     it fails.
 
-3. 【底層原理/策略模型類】（需 7-9 張大矩陣卡）
+3. [Underlying principle / strategy-model type] (7-9 large matrix cards
+   needed)
 
-   - 包含：定義、起源痛點、結構要素、經典案例、跨界遷移、反向診斷、概念對比、失效邊界、代價副作用。
+   - Include: definition, originating pain point, structural elements,
+     classic cases, cross-domain transfer, reverse diagnosis, concept
+     comparison, failure boundary, and costs/side effects.

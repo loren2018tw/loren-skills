@@ -1,20 +1,21 @@
 # Flashcards plugin v2 syntax
 
-Use this reference before writing cards into a note. These are authoring forms;
-the plugin adds identity metadata during update.
+Read this reference before writing cards into notes. The forms below are for
+authoring; identity metadata is added automatically by the plugin during
+update.
 
-## Select a card type
+## Choosing a card type
 
-| Need | Preferred form |
+| Need | Suggested form |
 | --- | --- |
 | Short question and answer | Inline basic |
-| Both directions are useful | Inline or fenced reversed |
-| Recall missing content in context | Cloze |
-| Multi-block answer under a topic | Hashtag heading |
-| Exact explicit boundaries | Fenced card or card callout |
-| One principle should return periodically | Reminder |
-| The whole note is intentionally one concept | Atomic note |
-| One claim worth asking several ways | Atomic note, several `test:` items |
+| Useful in both directions | Inline or fenced reversed |
+| Recall of missing content in context | Cloze |
+| Multi-section answer under one topic | Hashtag heading |
+| Explicit, precise boundaries | Fenced card or card callout |
+| A principle that should recur periodically | Reminder |
+| A note deliberately expressing one concept | Atomic note |
+| One claim worth asking in multiple ways | Atomic note, multiple `test:` entries |
 
 ## Inline cards
 
@@ -30,8 +31,8 @@ Reversed:
 TCP:::Transmission Control Protocol
 ```
 
-An inline card inside a list item owns the item and its indented child blocks.
-A sibling item at the same indentation starts a separate card.
+An inline card in a list item owns that item and its indented sub-block.
+A sibling item at the same indentation level starts a separate card.
 
 ## Cloze cards
 
@@ -40,12 +41,12 @@ The mitochondria is the ==powerhouse== of the cell.
 The {1:heart} pumps blood through the {1:circulatory system}.
 ```
 
-`==text==` uses automatic numbers. `{N:text}` uses an explicit number. Reuse
-`N` when several spans should be hidden together. Native `{{cN::text}}` is also
-supported.
+`==text==` uses automatic numbering. `{N:text}` uses explicit numbering.
+Reuse the same `N` when multiple spans should be hidden together. Native
+`{{cN::text}}` syntax is also supported.
 
-Keep the cloze in a sentence or other context that identifies the intended
-answer. Do not use a cloze only to remove an arbitrary word from copied prose.
+Keep clozes inside a sentence or other context that points at the expected
+answer. Never use clozes purely to delete arbitrary words from copied prose.
 
 ## Fenced cards
 
@@ -62,8 +63,8 @@ type: reversed
 `type` is optional and defaults to `basic`. Supported values are `basic`,
 `reversed`, `cloze`, and `reminder`.
 
-A cloze fence uses `front` as Anki's Text field. Its optional `back` becomes
-Extra. A reminder fence uses one `content` field:
+A cloze fence uses `front` as the Anki Text field and the optional `back` as
+the Extra field. A reminder fence uses a single `content` field:
 
 ````markdown
 ```flashcard
@@ -80,15 +81,15 @@ content: Prefer reversible decisions when uncertainty is high.
 A function that calls itself and has a base case.
 ```
 
-Use `#card-reverse` or `#card/reverse` for a reversed card. The marker may be
-on its own line immediately after the heading.
+Use `#card-reverse` or `#card/reverse` for reversed cards. The tag may sit on
+its own line directly after the heading.
 
-A heading card owns its full section. Lower headings stay in its answer. A
-heading at the same or a higher level ends the answer.
+A heading card owns its full section. Lower-level headings stay inside the
+answer. A heading at the same or higher level ends the answer.
 
-A paragraph with `#card` uses text in the same paragraph after the marker. If
-there is none, it uses the next top-level Markdown block. Use a heading or an
-explicit container for longer answers.
+A paragraph with `#card` uses the text in the same paragraph after the tag. If
+nothing else is in the paragraph, the next top-level Markdown block is used.
+Use a heading or an explicit container for longer answers.
 
 ## Reminder cards
 
@@ -96,8 +97,8 @@ explicit container for longer answers.
 Keep the feedback loop short. #card-reminder
 ```
 
-A reminder has content but no answer. A reminder paragraph owns only that
-paragraph. V1 `#card-spaced` syntax is not supported.
+A reminder card has content but no answer. A reminder paragraph owns only that
+paragraph. The v1 `#card-spaced` syntax is not supported.
 
 ## Card callouts
 
@@ -108,18 +109,18 @@ paragraph. V1 `#card-spaced` syntax is not supported.
 > It needs a base case.
 ```
 
-The callout is an explicit container. Its title is the question and its body is
+A callout is an explicit container. Its title is the question and its body is
 the answer.
 
 ## Atomic note cards
 
-Use atomic syntax only when the note is intentionally authored as one card.
+Use atomic syntax only when a note is deliberately written as a single card.
 The answer is always the first paragraph of the body. Everything after the
-first paragraph is never read.
+first paragraph is ignored.
 
-Write `test:` as a list of strings. A bare scalar is accepted and normalised
-to a one-item list, but the list form is the convention — it keeps the
-Obsidian Properties panel consistent across notes.
+Write `test:` as a list of strings. A single bare scalar is also accepted and
+normalized into a one-item list, but the list form is the convention: it keeps
+the Obsidian properties panel consistent across notes.
 
 ```markdown
 ---
@@ -130,17 +131,18 @@ test:
 A function that calls itself and has a base case.
 ```
 
-Each item produces one card. An item is either a reserved keyword or a
-question you write:
+Each entry produces one card. An entry is either a reserved keyword or a
+question you write yourself:
 
-| Item | Question | Result |
+| Entry | Question | Result |
 | --- | --- | --- |
-| `title` | the filename | basic |
-| `reversed` | filename and first paragraph, both directions | one note, two cards |
-| `cloze` | first paragraph with its `==spans==` hidden | cloze |
-| any other string | that string | basic |
+| `title` | The file name | Basic card |
+| `reversed` | File name and first paragraph, both directions | One note, two cards |
+| `cloze` | First paragraph with its `==spans==` hidden | Cloze card |
+| Any other string | That string | Basic card |
 
-Several items ask the same claim from different angles and share one answer:
+Multiple entries can ask about one claim from different angles while sharing
+one answer:
 
 ```markdown
 ---
@@ -150,45 +152,45 @@ test:
 ---
 ```
 
-That note produces two cards with the same answer. Use multiple items only
-when the cues probe the *same* claim. Cues that need different answers mean
-the note is not atomic — split it instead.
+That note produces two cards sharing the same answer. Use multiple entries only
+when the prompts target the *same* claim. If the prompts need different
+answers, the note is not atomic: split it.
 
-Rules that silently produce zero cards if broken. Check them before writing:
+The following violations silently produce zero cards. Check before writing:
 
-- Items must be unique. A repeated item invalidates the whole `test:` key.
-- A question you write must not equal the filename, and must not duplicate
-  what another item derives. Both collide with the card `title` produces.
+- Entries must be unique. Duplicate entries invalidate the whole `test:` key.
+- A self-written question must not equal the file name or duplicate another
+  entry's derived question. Both collide with the `title` card.
 - `reversed` and `cloze` may each appear at most once.
-- Nested maps or non-string items are an error, never guessed at.
+- Nested maps or non-string entries are errors; never guess.
 
-Two further conditions are reported as warnings and leave the note alone: a
-`test:` key with no first paragraph, and a `cloze` item whose first paragraph
-contains no `==span==`.
+Two conditions are reported as warnings and leave the note untouched: a `test:`
+key with no first paragraph, and a `cloze` entry whose first paragraph contains
+no `==span==`.
 
-A note without a `test:` key is not a card. That is the correct default for
-bridge notes, structure notes, and anything whose value is its links.
+A note without a `test:` key is not a card. For bridge notes, structure notes,
+and any note whose value lies in its links, this is the correct default.
 
 ## Boundaries and precedence
 
-An explicit card container owns its source range. Card-like text inside that
-range is content, not another card.
+An explicit card container owns its source span. Card-like text inside that
+span is content, not another card.
 
-The precedence is:
+Precedence, in order:
 
-1. Atomic note, fenced card, and card callout.
-2. Hashtag card.
-3. Inline list card and its child blocks.
-4. Inline reversed card.
-5. Inline basic card.
-6. Cloze card.
+1. Atomic note cards, fenced cards, and card callouts.
+2. Hashtag cards.
+3. Inline list cards and their sub-blocks.
+4. Inline reversed cards.
+5. Inline basic cards.
+6. Cloze cards.
 
-Do not place a second card inside a container. End the first container, then
-start the next card.
+Never place a second card inside a container. Close the first container before
+starting the next card.
 
 ## Decks, tags, and context
 
-An explicit note deck uses:
+To set a note's deck explicitly:
 
 ```yaml
 ---
@@ -199,9 +201,9 @@ tags:
 ---
 ```
 
-Without `cards-deck`, folder-based decks are on by default. The final fallback
-deck is `Default`. The default tag is `obsidian`. Parent headings are the
-default context shown above the review question.
+Without `cards-deck`, folder-based decks are enabled by default. The final
+fallback deck is `Default`. The default tag is `obsidian`. The parent heading
+is the default context shown above the review question.
 
 ## Managed metadata
 
@@ -212,7 +214,7 @@ Do not write or edit these values:
 - legacy numeric anchors;
 - Anki note IDs, source hashes, or sync hashes.
 
-The plugin creates and maintains them. Preserve existing values when editing a
-note.
+These are created and maintained by the plugin. Preserve existing values when
+editing a note.
 
-For complete edge cases, read `docs/wiki.md` in the repository.
+For the full set of edge cases, read `docs/wiki.md` in the repository.

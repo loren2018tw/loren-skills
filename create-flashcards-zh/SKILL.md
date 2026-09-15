@@ -5,11 +5,13 @@ description: Create or improve effective Anki flashcards inside Obsidian notes u
 
 # Create Obsidian Flashcards
 
-Create a small set of useful retrieval prompts from the user's source material. Keep the source content accurate, preserve its meaning in full, and use only syntax supported by this repository.
+Create a small set of useful retrieval prompts from the user's source. Keep the
+source accurate, preserve its meaning, and use only syntax supported by this
+repository.
 
 ## Required context
 
-Before creating or revising cards, read
+Before generating or revising cards, read
 [card design](references/card-design.md). Before writing cards into an Obsidian
 note, also read [plugin syntax](references/plugin-syntax.md).
 

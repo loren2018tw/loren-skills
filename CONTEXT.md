@@ -1,8 +1,10 @@
 # loren-skills
 
-本 repo 是 agent skills 的集合，每個目錄是一個獨立 skill。目前此 CONTEXT.md 收錄「文件轉 Markdown」領域的共用術語。
+本 repo 是 agent skills 的集合，每個目錄是一個獨立 skill。此 CONTEXT.md 按技能分組收錄各領域的共用術語。
 
 ## Language
+
+### 文件轉 Markdown
 
 **來源文件**（source document）:
 餵給轉換流程的輸入檔案（.docx 或舊版 .doc）。
@@ -19,3 +21,25 @@ _Avoid_: 清理、修正、cleanup
 **相容性橋接**（compatibility bridge）:
 pandoc 讀不了舊版 .doc 時，先用 LibreOffice 把 .doc 轉成 .docx 的前置步驟。
 _Avoid_: 格式轉換、格式橋接
+
+### GimKit 選擇題出題
+
+**核心概念**（key concept）:
+文本中值得反覆提問的學習目標，選擇題的正解單位。
+_Avoid_: 重要概念、考點
+
+**一答多問**（one-answer-many-questions）:
+同一核心概念以多個不同情境或角度的題幹反覆提問，每題正解皆為該概念本身。
+_Avoid_: 多面向
+
+**概念屬性題**（property question）:
+正解為核心概念的屬性、成因或機制敘述，而非概念詞本身的題型。
+_Avoid_: 因果題、機制題
+
+**混合式產題**（mixed question generation）:
+一份 kit 同時含一答多問題與概念屬性題，前者為主、後者為輔。
+_Avoid_: 混合模式、雙軌出題
+
+**干擾選項**（distractor）:
+選擇題中錯誤但看似合理的選項，須與正解相關或為易混概念。
+_Avoid_: 錯誤選項、垃圾選項、誘答選項

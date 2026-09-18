@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create GimKit Questions"
+  short_description: "Turn text into GimKit-importable multiple choice questions"
+  default_prompt: "Use $create-gimkit-questions to turn this text into a GimKit question CSV."

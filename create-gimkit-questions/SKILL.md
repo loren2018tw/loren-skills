@@ -1,6 +1,6 @@
 ---
 name: create-gimkit-questions
-description: Generate GimKit-importable multiple choice questions as a ready-to-upload CSV from provided text. Auto-extracts key concepts and key words from the source material, builds one-answer-many-questions scenario sets plus property and word questions, and engineers plausible, confusable distractors only. Use when a user asks to turn text, notes, or documents into GimKit questions or a question CSV. Do not use for other quiz platforms, text-input or flashcard formats, or generic summaries with no question output.
+description: Generate GimKit-importable multiple choice questions as a ready-to-upload CSV from provided text. Auto-extracts key concepts across the whole source (plus key words when the source is Chinese language material), builds one-answer-many-questions scenario sets and property questions covering every supported statement, and engineers plausible, confusable distractors only. Use when a user asks to turn text, notes, or documents into GimKit questions or a question CSV. Do not use for other quiz platforms, text-input or flashcard formats, or generic summaries with no question output.
 ---
 
 # Create GimKit Questions
@@ -8,7 +8,8 @@ description: Generate GimKit-importable multiple choice questions as a ready-to-
 Turn the user's source material into single-correct multiple choice questions
 that import cleanly into GimKit (New Kit → Import from Spreadsheet → Upload
 File). Keep the source content accurate, test understanding rather than word
-matching, and never fill an answer slot with a throwaway option.
+matching, never fill an answer slot with a throwaway option, and cover the
+whole source: every statement the text supports is question material.
 
 ## Required context
 
@@ -38,31 +39,32 @@ question, mixed question generation, distractor.
 
 1. Identify the scope: the whole source or the part the user selects. Accept
    pasted text or a file path. Question language follows the source text.
-2. Extract two pools separately: the key concepts (durable ideas worth
-   repeated retrieval) and the key words (words worth testing for
-   pronunciation or meaning). If the text is thin, produce less; do not
-   inflate either pool.
-3. For each key concept, write two scenario questions whose correct answer is
-   the concept itself, from two different stem angles. If and only if the
-   text supports a cause, mechanism, or property statement for the concept,
-   add at most one property question whose correct answer is that statement.
-   For each key word, write one word question (up to two when another
-   testable facet exists) per the rules in `question-design.md`.
+2. Extract key concepts over the whole source, fact-dense passages included.
+   Extract the key-word pool only when the source is Chinese language
+   material (課文、散文、文言) or the user asks for word questions.
+3. For each key concept, write scenario questions from distinct stem angles
+   (at least two) and every property question the text supports for it.
+   Distribute the total across concepts by richness: important, dense
+   concepts carry more questions.
 4. Source every distractor through the three-tier hierarchy in
    `question-design.md`. Tier 3 transforms are always available: no question
    ever ends up with filler options.
-5. Run the self-check in `question-design.md`. Fix or drop failing questions.
+5. Run the self-check in `question-design.md`. Fix first; drop only what
+   cannot be fixed. The check is a quality gate, never a way to shrink the
+   set.
 6. Write the CSV file and show every question in the conversation for review.
    If the user only asks to see a preview, show the questions without writing
    the file.
 
 ## Question count
 
-Total = two scenario questions per key concept, plus optional property
-questions, plus one to two word questions per key word, bounded to 5–30.
-When the user requests a specific count, distribute extra questions across
-concepts and words evenly, keeping each question within the design rules; if
-the material runs out, say so rather than pad.
+No fixed cap. The only ceiling is what the source supports: a question fails
+fidelity when unsupported, never for being too many. Per key concept keep at
+least two scenario questions and add every supported property statement;
+word questions follow their own section. When the user asks for a specific
+count or "as many as possible", work up to that ceiling and spread the
+questions across the whole source; if the material runs out, say so rather
+than pad.
 
 ## Output location
 

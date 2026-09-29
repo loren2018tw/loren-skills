@@ -10,8 +10,12 @@ question, mixed question generation, distractor.
 A key concept is an idea that rewards being recognized from multiple
 situations. Signals: the text defines it, explains its cause or mechanism,
 gives examples of it, contrasts it with something, or uses it to account for
-other material. One-off proper nouns, dates, and decorative details are not
-key concepts. Extract fewer concepts from thin text rather than inflating.
+other material. Fact-dense passages stay in scope: an event, person, rule,
+or named item whose date, number, composition, or effect the text states
+outright is a valid concept, and its stated facts become property-question
+material. Purely decorative details that back no statement worth retrieving
+are the only exclusions. Cover the whole source when extracting; trim only
+on genuinely thin text.
 
 Key words are a separate pool with their own section below; extract both
 pools independently and never substitute one for the other.
@@ -45,13 +49,16 @@ constrains depends on the question type:
 
 ## Scenario questions
 
-Two per key concept. The correct answer is always the concept word itself;
-the stems are different situations that all point to that same concept. This
-is the one-answer-many-questions pattern: the same concept is reached
-repeatedly through varied contexts, which strengthens recognition.
+The correct answer is always the concept word itself; the stems are
+situations that all point to that same concept. This is the
+one-answer-many-questions pattern: the same concept is reached repeatedly
+through varied contexts, which strengthens recognition.
 
-- Vary the situation type across a concept's pair: one everyday scene plus
-  one analytical framing beats two near-identical setups.
+- At least two per key concept, from different stem angles. Keep adding
+  while unused angles remain: a concept the text develops heavily can
+  support most of the seven angles, and every extra retrieval helps.
+- Vary the situation type across a concept's questions: one everyday scene
+  plus one analytical framing beats two near-identical setups.
 - Scenario stems may be synthesized. A synthesized stem wraps the concept in
   common-knowledge, everyday material. It must not assert specialized facts
   absent from the text, and must not contradict the text.
@@ -63,20 +70,27 @@ repeatedly through varied contexts, which strengthens recognition.
 
 ## Property questions
 
-At most one per key concept, and only when the text supports a cause,
-mechanism, or property statement. The correct answer is that statement, not
-the concept word. Stems follow the leakage ban.
+The correct answer is a statement the text actually states — a property,
+cause, mechanism, date, number, composition, or fact about people and
+events — not the concept word itself. Every distinct supported statement is
+worth one question, with no per-concept maximum; vary the stem angle across
+a concept's property questions.
 
 - Example: stem "熱脹冷縮的微觀原因是什麼？" — correct answer "溫度升高使
   分子間距變大", not the concept word itself.
+- Example (fact-dense): stem "龐貝城是在哪一年被維蘇威火山噴發掩埋？" —
+  correct answer "西元79年".
 
 ## Word questions
 
-Key words form a separate pool from key concepts. A key word is a word worth
-testing for pronunciation or meaning: difficult or rare words, words the
-text's imagery leans on, polyphones (破音字) whose reading depends on
-context, and domain terms. Not every noun qualifies; extract fewer from thin
-text rather than inflating.
+Extract the key-word pool only when the source is Chinese language material
+(課文、散文、文言、國語科教材) or the user explicitly asks for word
+questions; for other subjects skip the pool by default.
+
+A key word is a word worth testing for pronunciation or meaning: difficult
+or rare words, words the text's imagery leans on, polyphones (破音字) whose
+reading depends on context, and domain terms. Not every noun qualifies;
+extract fewer from thin text rather than inflating.
 
 - One question per key word by default; add a second only when the word has
   another testable facet, such as usage, part of speech, or a confusing
@@ -101,8 +115,9 @@ learner who just read the text could plausibly pick.
    misconceptions for this topic, even when absent from the text. For
    熱脹冷縮: 熱熔化（heat melting solids）.
 3. **Transforms of the correct answer**: swapped subject, reversed cause,
-   changed scope, unit, or order. For concept words, word-shape transforms:
-   reversed order (冷脹熱縮), near-spelling variants.
+   changed scope, unit, or order; for numbers and dates, adjacent plausible
+   values, swapped digits, or changed units. For concept words, word-shape
+   transforms: reversed order (冷脹熱縮), near-spelling variants.
 
 Word questions fill their slots on two battlefields, same tiers applied:
 
@@ -120,7 +135,8 @@ repeated correct answer never appears alongside the same three options.
 
 ## Self-check
 
-Before writing the CSV, verify every question. Fix or drop failures.
+Before writing the CSV, verify every question. Fix first, drop as a last
+resort.
 
 - Stem passes the leakage ban: the correct answer's content never appears in
   the stem.
@@ -130,3 +146,7 @@ Before writing the CSV, verify every question. Fix or drop failures.
   pick it.
 - No two questions for one concept or key word reuse a stem angle or the
   same distractor set.
+
+When a question fails, fix it before anything else: re-angle the stem,
+re-source the distractors, tighten the wording. Drop only what cannot be
+fixed. The check is a quality gate, never a tool for shrinking the set.

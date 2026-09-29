@@ -5,7 +5,8 @@
 
 原理:
   markitdown（mammoth）轉 docx 時，圖片變成截斷的 data URI 佔位符
-  `![](data:image/jpeg;base64...)`，且佔位符數量與 docx 內圖片引用數一致、
+  `![alt](data:image/jpeg;base64...)`（alt 可能為空，也可能帶 docx 內部
+  圖片名，隨 markitdown 版本而異），且佔位符數量與 docx 內圖片引用數一致、
   順序同 body 順序。本腳本依 docx `word/document.xml` 中 mc:Choice 分支的
   r:embed/r:id 引用順序（跳過 mc:Fallback 避免重複），把第 k 個佔位符
   換成第 k 張圖：`![<stem>-image-k](assets/<stem>-image-k.<ext>)`。
@@ -101,14 +102,20 @@ def main() -> int:
                 shutil.copyfileobj(fsrc, fdst)
 
     ref_names = []  # 新檔名，對位 refs
+    renamed = {}  # media/xxx -> 新檔名（同一檔被引用多次時重用同一新檔名）
     for k, (rid, media) in enumerate(refs, 1):
+        if media in renamed:
+            ref_names.append(renamed[media])
+            continue
         ext = os.path.splitext(os.path.basename(media))[1].lstrip('.').lower()
         new = f'{stem}-image-{k}.{ext}'
         src = os.path.join(assets, os.path.basename(media))
         dst = os.path.join(assets, new)
         if os.path.exists(src):
             os.replace(src, dst)
-        ref_names.append(new if os.path.exists(dst) else None)
+        name = new if os.path.exists(dst) else None
+        renamed[media] = name
+        ref_names.append(name)
 
     print(f'引用圖片 {len(refs)} 張；media 實檔 {len(media_files)} 個')
 
@@ -124,10 +131,10 @@ def main() -> int:
     with open(md_src, encoding='utf-8') as f:
         md = f.read()
 
-    # 相鄰佔位符拆行（此時格式固定為 data:...，不會誤傷一般連結）
-    md = re.sub(r'\)\s*(!\[\]\(data:image/)', r')\n\n\1', md)
+    # 相鄰佔位符拆行（alt 可為空或帶 docx 圖片名，兩種形式都要拆）
+    md = re.sub(r'\)\s*(!\[[^\]]*\]\(data:image/)', r')\n\n\1', md)
 
-    placeholder = re.compile(r'!\[\]\(data:image/[^)]+\)')
+    placeholder = re.compile(r'!\[[^\]]*\]\(data:image/[^)]+\)')
 
     counter = {'n': 0}
 
@@ -135,8 +142,9 @@ def main() -> int:
         k = counter['n']
         counter['n'] += 1
         if k < len(ref_names) and ref_names[k]:
-            # 路徑用 <> 包裹：檔名含空白或括號時仍是合法 CommonMark 連結
-            alt = f'{stem}-image-{k + 1}'
+            # 路徑用 <> 包裹：檔名含空白或括號時仍是合法 CommonMark 連結；
+            # alt 取自實際引用檔名，重複引用同一檔時 alt 仍與檔名一致
+            alt = os.path.splitext(ref_names[k])[0]
             return f'![{alt}](<assets/{ref_names[k]}>)'
         return m.group(0)  # 引用不足：保留佔位符，靠數量核對回報
 

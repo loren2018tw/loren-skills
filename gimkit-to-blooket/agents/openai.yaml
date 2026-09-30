@@ -1,0 +1,4 @@
+interface:
+  display_name: "GimKit to Blooket"
+  short_description: "Convert a GimKit quiz CSV into Blooket import format"
+  default_prompt: "Use $gimkit-to-blooket to convert this GimKit CSV into a Blooket import file."

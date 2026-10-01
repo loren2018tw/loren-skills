@@ -1,0 +1,13 @@
+# 預設：文字檔一律 LF（index 與工作區）
+* text=auto eol=lf
+
+# Windows 原生腳本：工作區使用 CRLF
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# 二進位
+*.doc  binary
+*.docx binary

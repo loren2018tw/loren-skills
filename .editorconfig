@@ -1,0 +1,15 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+# UTF-8 with BOM：5.1 直呼時得到乾淨的版本需求錯誤，而非亂碼（詳見 docs/adr/0003）
+[*.ps1]
+charset = utf-8-bom
+end_of_line = crlf
+
+# 純 ASCII、無 BOM（cmd.exe 會把 BOM 當指令解讀）
+[*.{cmd,bat}]
+end_of_line = crlf

@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 7.2
 <#
 .SYNOPSIS
   將本倉庫的技能以目錄連接點（junction）安裝到目標技能庫（預設 ~\.agents\skills）。
@@ -7,12 +7,14 @@
   語意與 install.sh 對齊。Windows 以 junction 實作：對檔案系統 API 透明、
   不需要管理員權限；.lnk 捷徑不是檔案系統連結，agent 掃描不到，因此不採用。
 
-  注意：本腳本尚未在 Windows 實機驗證，建議先以 -DryRun 預覽。
+  需求：PowerShell 7.2 以上（pwsh）。Windows PowerShell 5.1 不支援；直接以
+  5.1 執行時，#Requires 會立刻給出版本需求訊息。以 install.cmd 執行會先
+  檢查 pwsh 是否存在，缺少時只顯示安裝指引，不做任何修改。
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File .\install.ps1 -DryRun
+  pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -DryRun
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File .\install.ps1 -Skills who-is-loren
+  pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Skills who-is-loren
 #>
 [CmdletBinding()]
 param(
@@ -24,6 +26,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# 輸出編碼：被 pipe／agent harness 捕捉時輸出 UTF-8；互動式主控台維持原代碼頁。
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+if ([Console]::IsOutputRedirected) {
+  try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false) } catch { }
+}
 
 $Root     = [System.IO.Path]::GetFullPath($PSScriptRoot)
 $RootFull = $Root.TrimEnd('\', '/')

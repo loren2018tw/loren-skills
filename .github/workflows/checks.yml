@@ -33,3 +33,19 @@ jobs:
         run: install.cmd -DryRun -Target "%TEMP%\loren-skills-cmd-test"
       - name: Windows PowerShell 5.1 必須乾淨失敗
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/ps51-failfast.ps1
+
+  skill-scripts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 安裝 markitdown（docx 全管線煙霧用）
+        run: python -m pip install 'markitdown[docx]==0.1.8'
+      - name: 技能腳本煙霧測試
+        run: python tests/script-smoke.py

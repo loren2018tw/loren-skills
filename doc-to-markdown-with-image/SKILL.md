@@ -13,14 +13,16 @@ description: Convert Word documents (.docx or legacy .doc) to clean markdown whi
 
 - 使用者要求把 .docx / .doc 轉成 markdown 且要保留圖片時觸發；使用者也可直接以 skill 名稱啟動。
 - 來源不是 Word 文件（PDF、PPTX 等）時，告知本 skill 不支援，不要動手。
-- 環境需求：`soffice`（LibreOffice）、`markitdown`（0.1.8+，`uv tool install markitdown`）、`python3`。缺任一者即回報安裝指令，不要臨場改用別的工具改寫輸出風格。
+- 環境需求：Python 3.8+、`markitdown`（0.1.8+，`uv tool install 'markitdown[docx]'`）、`soffice`（LibreOffice，僅 `.doc` 橋接與 emf/wmf 轉檔需要）。缺任一者即回報安裝指令，不要臨場改用別的工具改寫輸出風格。
 
 ## 工作流程
 
 1. 執行轉換腳本（路徑相對本 skill 目錄）：
-   ```
-   bash scripts/doc-to-md.sh <來源文件> [輸出資料夾]
-   ```
+   | 平台 | 指令 |
+   | --- | --- |
+   | Windows | `py -3 scripts/doc-to-md.py <來源文件> [輸出資料夾]` |
+   | macOS / Linux | `python3 scripts/doc-to-md.py <來源文件> [輸出資料夾]` |
+   表中指令不存在時，Windows 改試 `python`、macOS/Linux 改試 `python`；都沒有就回報 Python 安裝指引（python.org 安裝器預設提供 `py` launcher），不要臨場改寫管線。
    不給輸出資料夾時，預設在來源文件同層建立同名資料夾：`<stem>.md` + `assets/`。
 2. 驗收，全數成立才算完成：
    - 輸出資料夾內有 `<stem>.md`；

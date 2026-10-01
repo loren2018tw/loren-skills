@@ -11,6 +11,8 @@ Loren 自製的 agent 技能收藏倉。
 - **gimkit-to-blooket**: 把 GimKit 匯出的題庫 CSV 轉成 Blooket 官方匯入範本格式（含 Time Limit、正解位置輪替與匯入前驗證）。
 - **create-flashcards**: 在 Obsidian 筆記內建立有效的 Anki 記憶卡（Flashcards plugin v2 語法）。
 
+> 技能內腳本官方支援 Linux 與 Windows；macOS 為 best-effort（可用但未經 CI 驗證）。
+
 ## 安裝
 
 每個技能是一個目錄，內含 `SKILL.md`。安裝＝在目標技能庫（預設 `~/.agents/skills`）建立指向本倉庫技能目錄的連結；之後在本倉庫 `git pull`，agent 端即時生效，不需重裝。

@@ -16,7 +16,8 @@ Blooket 前端解析規則（取自 dashboard.blooket.com bundle 程式碼，202
               6=Time Limit (sec)、7=Correct Answer(s)（位置數字 1-4，多解以逗號分隔）
 
 用法:
-    python3 scripts/convert_to_blooket.py 來源GimKit.csv [-o 輸出檔.csv] [--time 30]
+    Windows:      py -3 scripts/convert_to_blooket.py 來源GimKit.csv [-o 輸出檔.csv] [--time 30]
+    macOS/Linux:  python3 scripts/convert_to_blooket.py 來源GimKit.csv [-o 輸出檔.csv] [--time 30]
 """
 import argparse
 import collections
@@ -24,6 +25,19 @@ import csv
 import sys
 
 BLOOKET_MAX_TIME = 300  # Blooket 範本欄名註明 (Max: 300 seconds)
+
+
+def use_utf8_stdio() -> None:
+    """stdout/stderr 明確以 UTF-8 輸出：非 UTF-8 pipe（如 zh-TW Windows 的 CP950）不崩。
+
+    與 doc-to-markdown-with-image/scripts/_compat.py 的同名函式刻意重複：
+    各技能需能獨立安裝，不互相 import。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
 
 
 def fail(msg: str) -> None:
@@ -129,6 +143,7 @@ def verify(src: list[list[str]], out_rows: list[list[str]], time_limit: str) -> 
 
 
 def main() -> None:
+    use_utf8_stdio()
     ap = argparse.ArgumentParser(
         description="GimKit CSV → Blooket 官方匯入範本格式（每題含 Time Limit）"
     )

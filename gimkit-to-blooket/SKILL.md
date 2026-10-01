@@ -19,10 +19,12 @@ description: 把 GimKit 匯出的題庫 CSV（Question, Correct Answer, Incorrec
 
 ### 1. 執行轉換腳本（路徑相對本 skill 目錄）
 
-```bash
-python3 scripts/convert_to_blooket.py 來源-gimkit.csv \
-  -o Blooket匯入_單元1選擇題.csv --time 30
-```
+| 平台 | 指令 |
+| --- | --- |
+| Windows | `py -3 scripts/convert_to_blooket.py 來源-gimkit.csv -o Blooket匯入_單元1選擇題.csv --time 30` |
+| macOS / Linux | `python3 scripts/convert_to_blooket.py 來源-gimkit.csv -o Blooket匯入_單元1選擇題.csv --time 30` |
+
+表中指令不存在時，Windows 改試 `python`、macOS/Linux 改試 `python`；都沒有就回報 Python 安裝指引（python.org 安裝器預設提供 `py` launcher），不要臨場改寫管線。
 
 - `-o` 輸出路徑（預設: `<來源檔名去副檔名>-blooket.csv`，寫在來源檔同層）
 - `--time` 每題秒數，1~300，預設 30（依使用者要求調整）

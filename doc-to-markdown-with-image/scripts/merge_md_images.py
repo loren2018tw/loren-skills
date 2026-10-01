@@ -27,6 +27,10 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _compat import find_tool, use_utf8_stdio  # noqa: E402
 
 PNG_FILTER = ('png:draw_png_Export:{"PixelWidth":{"type":"long","value":1600},'
               '"PixelHeight":{"type":"long","value":2200}}')
@@ -42,7 +46,8 @@ def convert_metafiles_to_png(assets: str, work: str) -> dict:
     if not targets:
         return {}
 
-    if shutil.which('soffice') is None:
+    soffice = find_tool('soffice')
+    if soffice is None:
         print('警告: 找不到 soffice，無法將 emf/wmf 轉 png，引用保留原格式',
               file=sys.stderr)
         return {}
@@ -51,10 +56,11 @@ def convert_metafiles_to_png(assets: str, work: str) -> dict:
     for f in targets:
         src = os.path.join(assets, f)
         r = subprocess.run(
-            ['soffice', f'-env:UserInstallation=file://{work}/lo',
+            [soffice, f'-env:UserInstallation={(Path(work) / "lo").as_uri()}',
              '--headless', '--convert-to', PNG_FILTER,
              '--outdir', assets, src],
-            capture_output=True, text=True, timeout=120)
+            capture_output=True, text=True, encoding='utf-8', errors='replace',
+            timeout=120)
         png = os.path.splitext(src)[0] + '.png'
         if r.returncode == 0 and os.path.exists(png):
             # <stem>-image-K.emf → <stem>-image-K.png；emf/wmf 原檔留著備查
@@ -65,14 +71,14 @@ def convert_metafiles_to_png(assets: str, work: str) -> dict:
 
 
 def main() -> int:
+    use_utf8_stdio()
     if len(sys.argv) != 4:
         print(__doc__, file=sys.stderr)
         return 1
-    docx, md_src, outdir = sys.argv[1], sys.argv[2], sys.argv[3].rstrip('/')
+    docx, md_src, outdir = sys.argv[1], sys.argv[2], sys.argv[3].rstrip('/\\')
     stem = os.path.splitext(os.path.basename(docx))[0]
     assets = os.path.join(outdir, 'assets')
     os.makedirs(assets, exist_ok=True)
-    work = tempfile.mkdtemp(prefix='emf2png-')
 
     # ---- 1. docx: body 順序的圖片引用（只掃 mc:Choice，跳過 mc:Fallback）----
     with zipfile.ZipFile(docx) as z:
@@ -120,10 +126,11 @@ def main() -> int:
     print(f'引用圖片 {len(refs)} 張；media 實檔 {len(media_files)} 個')
 
     # ---- 2b. emf/wmf 轉 png（保留原檔），引用改指向 png ----
-    renamed = convert_metafiles_to_png(assets, work)
+    with tempfile.TemporaryDirectory(prefix='emf2png-') as work:
+        emf_png_map = convert_metafiles_to_png(assets, work)
     meta_ext = ('.emf', '.wmf')
     ref_names = [
-        renamed.get(name) if name and name.lower().endswith(meta_ext) else name
+        emf_png_map.get(name, name) if name and name.lower().endswith(meta_ext) else name
         for name in ref_names
     ]
 

@@ -34,7 +34,15 @@ Loren 自製的 agent 技能收藏倉。
 
 ### Windows
 
-Windows 預設的執行原則（Restricted）會擋下 `.ps1`，直接執行 `.\install.ps1` 會出現「因為這個系統上已停用指令碼執行，所以無法載入……」的錯誤。最簡單的方式是改用 `install.cmd`，它會自動以 `Bypass` 原則呼叫 `install.ps1`：
+需要 **PowerShell 7.2 以上（pwsh）**。任選一種安裝方式：
+
+```powershell
+winget install -e --id Microsoft.PowerShell   # 一行搞定（會跳 UAC 提權）
+```
+
+或從 Microsoft Store 搜尋「PowerShell」（不需管理員權限），或下載 <https://aka.ms/powershell> 的 MSI／免安裝 zip。
+
+Windows 預設的執行原則（Restricted）會擋下 `.ps1`，直接執行 `.\install.ps1` 會出現「因為這個系統上已停用指令碼執行，所以無法載入……」的錯誤。最簡單的方式是改用 `install.cmd`，它會先確認 `pwsh` 存在、版本足夠，再以 `Bypass` 原則呼叫 `install.ps1`：
 
 ```bat
 .\install.cmd -DryRun                 :: 先預覽
@@ -43,17 +51,17 @@ Windows 預設的執行原則（Restricted）會擋下 `.ps1`，直接執行 `.\
 .\install.cmd -Uninstall
 ```
 
-也可以直接呼叫 PowerShell（等效，適合你目前的副本）：
+找不到 `pwsh`（或版本太舊）時，`install.cmd` 不會做任何修改，只會顯示安裝指引。已裝好 PowerShell 7 的人也可以直接呼叫：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -DryRun
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -DryRun
 ```
 
-若只想在目前這個 PowerShell 工作階段放行，可先執行 `Set-ExecutionPolicy -Scope Process Bypass`，再執行 `.\install.ps1`。
+若只想在目前這個 PowerShell 工作階段放行，可先執行 `Set-ExecutionPolicy -Scope Process Bypass`，再以 pwsh 執行 `.\install.ps1`。
 
 Windows 以**目錄連接點（junction）**實作，不需要管理員權限；`.lnk` 捷徑不是檔案系統連結，agent 不會跟隨，因此不採用。
 
-> ⚠️ `install.ps1`／`install.cmd` 尚未完成 Windows 實機驗證，請先以 `-DryRun` 預覽結果。
+> 兩平台的安裝腳本都由 CI（`.github/workflows/checks.yml`）在真實平台執行驗證：Linux 跑 `install.sh` 生命週期，Windows 以 PowerShell 7 跑 junction 生命週期，並確認 Windows PowerShell 5.1 會乾淨地拒絕執行。
 
 ### 手動安裝
 

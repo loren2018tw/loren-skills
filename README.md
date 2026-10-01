@@ -15,6 +15,8 @@ Loren 自製的 agent 技能收藏倉。
 
 每個技能是一個目錄，內含 `SKILL.md`。安裝＝在目標技能庫（預設 `~/.agents/skills`）建立指向本倉庫技能目錄的連結；之後在本倉庫 `git pull`，agent 端即時生效，不需重裝。
 
+> 建議以 `git clone` 取得本倉庫，而非下載 zip：連結安裝的即時更新靠 `git pull`，zip 副本沒有這個管道。
+
 ### Linux / macOS
 
 ```bash
@@ -32,16 +34,26 @@ Loren 自製的 agent 技能收藏倉。
 
 ### Windows
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -DryRun     # 先預覽
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -Skills who-is-loren
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall
+Windows 預設的執行原則（Restricted）會擋下 `.ps1`，直接執行 `.\install.ps1` 會出現「因為這個系統上已停用指令碼執行，所以無法載入……」的錯誤。最簡單的方式是改用 `install.cmd`，它會自動以 `Bypass` 原則呼叫 `install.ps1`：
+
+```bat
+.\install.cmd -DryRun                 :: 先預覽
+.\install.cmd
+.\install.cmd -Skills who-is-loren
+.\install.cmd -Uninstall
 ```
+
+也可以直接呼叫 PowerShell（等效，適合你目前的副本）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -DryRun
+```
+
+若只想在目前這個 PowerShell 工作階段放行，可先執行 `Set-ExecutionPolicy -Scope Process Bypass`，再執行 `.\install.ps1`。
 
 Windows 以**目錄連接點（junction）**實作，不需要管理員權限；`.lnk` 捷徑不是檔案系統連結，agent 不會跟隨，因此不採用。
 
-> ⚠️ `install.ps1` 尚未在 Windows 實機驗證，請先以 `-DryRun` 預覽結果。
+> ⚠️ `install.ps1`／`install.cmd` 尚未完成 Windows 實機驗證，請先以 `-DryRun` 預覽結果。
 
 ### 手動安裝
 

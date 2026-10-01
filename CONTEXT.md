@@ -69,3 +69,21 @@ _Avoid_: 隨機打散、洗牌
 **匯入前驗證**（pre-import verification）:
 輸出前模擬 Blooket 前端解析流程（跳過前兩列 → 過濾 → 取前 10 欄）逐題比對來源的檢查。
 _Avoid_: 自我檢查、測試
+
+### 技能安裝
+
+**技能目錄**（skill directory）:
+根目錄下含 SKILL.md 的一級目錄，是安裝的最小單位。
+_Avoid_: 技能資料夾、skill folder
+
+**目標技能庫**（target skills directory）:
+agent 掃描技能的位置，預設 ~/.agents/skills。
+_Avoid_: 安裝目錄、skills 資料夾
+
+**連結安裝**（link install）:
+在目標技能庫建立指向技能目錄的檔案系統連結（Unix symlink／Windows junction），技能內容更新即時生效。
+_Avoid_: 軟連結安裝、symlink 安裝、複製安裝
+
+**外部技能**（external skill）:
+由其他工具（vercel skills CLI）以複本安裝、非本 repo 管理的技能。
+_Avoid_: 第三方技能

@@ -21,7 +21,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'doc-to-markdown-with-image' / 'scripts'))
-from _compat import common_tool_location, find_tool  # noqa: E402
+from _compat import common_tool_location, find_tool, use_utf8_stdio  # noqa: E402
+
+use_utf8_stdio()  # 測試自身的輸出也要 UTF-8（Windows CI 的 pipe 預設 cp1252）
 
 BLOOKET = ROOT / 'gimkit-to-blooket' / 'scripts' / 'convert_to_blooket.py'
 MERGE = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'merge_md_images.py'

@@ -3,20 +3,26 @@
 
 用法: python3 tests/script-smoke.py
 
-涵蓋（不需重量級依賴；docx 全管線需 markitdown，缺席時跳過該段）:
+涵蓋（不需重量級依賴；docx 全管線需 markitdown、標注驗證需 Pillow＋CJK 字型，
+缺席時跳過對應段）:
   1. gimkit-to-blooket 轉換：成功輸出、逐題正確、CP950 pipe 不崩、來源錯誤 exit 1
   2. merge_md_images：成功對位、數量不符 exit 2、emf 轉檔失敗警告不崩
-  3. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback
+  3. annotate_images：群組示意圖文字繪回圖檔、字型無效時警告且原圖不動
+  4. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback、
+     Pillow 缺席 exit 1 含安裝指令無 traceback
 
-只用 Python 標準庫；fixture（CSV、docx）在測試中動態生成，不提交二進位檔。
+只用 Python 標準庫（Pillow 僅在可用時做像素驗證）；fixture（CSV、docx）在測試中
+動態生成，不提交二進位檔。
 """
 import base64
 import csv
 import os
+import struct
 import subprocess
 import sys
 import tempfile
 import zipfile
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -76,6 +82,20 @@ def write_gimkit_csv(path: Path) -> list[list[str]]:
 PNG_1PX = base64.b64decode(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
 
+
+def solid_png(width: int, height: int, rgb=(255, 255, 255)) -> bytes:
+    """純標準庫產生單色 PNG（標注驗證比對像素用）。"""
+    raw = b''.join(b'\x00' + bytes(rgb) * width for _ in range(height))
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return struct.pack('>I', len(data)) + tag + data + \
+            struct.pack('>I', zlib.crc32(tag + data))
+
+    return (b'\x89PNG\r\n\x1a\n'
+            + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
+            + chunk(b'IDAT', zlib.compress(raw))
+            + chunk(b'IEND', b''))
+
 _CONTENT_TYPES = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -125,6 +145,76 @@ def build_docx(path: Path, media_name: str, media_bytes: bytes) -> None:
         z.writestr(f'word/media/{media_name}', media_bytes)
 
 
+_GROUP_TEXT_P = ('<w:p><w:pPr><w:jc w:val="center"/></w:pPr>'
+                 '<w:r><w:rPr><w:b/><w:color w:val="D22B2B"/><w:sz w:val="24"/>'
+                 '</w:rPr><w:t>標籤文字</w:t></w:r></w:p>')
+
+# 群組示意圖（Choice 的 wpg 群組＋Fallback 的 VML）：mammoth 讀 Fallback 分支
+# 輸出圖片與文字，merge 端只解析 Choice 分支取座標。
+_DOCUMENT_GROUP = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+ xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+ xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+ xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"
+ xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+ xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<w:body>
+<w:p><w:r><w:t>測試段落。</w:t></w:r></w:p>
+<w:p><w:r>
+<mc:AlternateContent>
+<mc:Choice Requires="wpg">
+<w:drawing><wp:inline>
+<wp:extent cx="914400" cy="914400"/><wp:docPr id="1" name="group"/>
+<a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup">
+<wpg:wgp>
+<wpg:cNvGrpSpPr/><wpg:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="914400" cy="914400"/></a:xfrm></wpg:grpSpPr>
+<pic:pic><pic:nvPicPr><pic:cNvPr id="2" name="image1.ext"/><pic:cNvPicPr/></pic:nvPicPr>
+<pic:blipFill><a:blip r:embed="rId5"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>
+<wps:wsp><wps:cNvSpPr txBox="1"/><wps:spPr><a:xfrm><a:off x="57150" y="80010"/><a:ext cx="800100" cy="685800"/></a:xfrm>
+<a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></wps:spPr>
+<wps:txbx><w:txbxContent>{_GROUP_TEXT_P}</w:txbxContent></wps:txbx>
+<wps:bodyPr wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="ctr"/></wps:wsp>
+</wpg:wgp></a:graphicData></a:graphic>
+</wp:inline></w:drawing>
+</mc:Choice>
+<mc:Fallback>
+<w:pict>
+<v:group id="g1" style="position:absolute;width:72pt;height:72pt" coordorigin="0,0" coordsize="100,100">
+<v:shape id="s1" style="position:absolute;left:0;top:0;width:100;height:100" type="_x0000_t75">
+<v:imagedata r:id="rId6" o:title=""/>
+</v:shape>
+<v:shape id="s2" style="position:absolute;left:10;top:10;width:40;height:20" stroked="f">
+<v:textbox inset="0,0,0,0"><w:txbxContent>{_GROUP_TEXT_P}</w:txbxContent></v:textbox>
+</v:shape>
+</v:group>
+</w:pict>
+</mc:Fallback>
+</mc:AlternateContent>
+</w:r></w:p>
+<w:sectPr/>
+</w:body></w:document>'''
+
+
+def build_group_docx(path: Path, media_name: str, media_bytes: bytes) -> None:
+    """最小群組示意圖 docx：Choice 的 wpg 群組（底圖＋文字方塊）與 Fallback 的 VML。"""
+    doc_rels = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/{media_name}"/>
+<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/{media_name}"/>
+</Relationships>'''
+    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('[Content_Types].xml', _CONTENT_TYPES)
+        z.writestr('_rels/.rels', _ROOT_RELS)
+        z.writestr('word/document.xml', _DOCUMENT_GROUP)
+        z.writestr('word/_rels/document.xml.rels', doc_rels)
+        z.writestr(f'word/media/{media_name}', media_bytes)
+
+
 PLACEHOLDER = '![](data:image/png;base64...)'
 
 
@@ -136,6 +226,17 @@ def write_md(path: Path, placeholders: int) -> None:
 def tool_discoverable(name: str) -> bool:
     """近似腳本的工具搜尋：PATH 或常見安裝位置。"""
     return find_tool(name) is not None
+
+
+_PILLOW = None
+
+
+def pillow_available() -> bool:
+    """本機是否有 Pillow（本 skill 必要依賴；缺席時相關段跳過）。"""
+    global _PILLOW
+    if _PILLOW is None:
+        _PILLOW = _module_available('PIL')
+    return _PILLOW
 
 
 # ---------- 測試 ----------
@@ -175,6 +276,9 @@ def test_blooket(tmp: Path) -> None:
 
 
 def test_merge(tmp: Path) -> None:
+    if not pillow_available():
+        skip('merge: 全套', '本機沒有 Pillow（本 skill 必要依賴）')
+        return
     # 1) 成功對位
     d = tmp / 'merge1'
     d.mkdir()
@@ -210,9 +314,58 @@ def test_merge(tmp: Path) -> None:
               r.returncode == 0 and '警告' in out_text(r) and 'demo-image-1.emf' in md3, out_text(r)[-300:])
 
 
+def test_overlay(tmp: Path) -> None:
+    if not pillow_available():
+        skip('overlay: 全套', '本機沒有 Pillow（本 skill 必要依賴）')
+        return
+    src = solid_png(80, 80)
+    # 1) 群組示意圖：文字繪回底圖（覆蓋原檔、一律 PNG；圖下文字保留）
+    d = tmp / 'overlay1'
+    d.mkdir()
+    build_group_docx(d / 'demo.docx', 'image1.png', src)
+    write_md(d / 'markitdown.md', 1)
+    r = run([sys.executable, str(MERGE), str(d / 'demo.docx'),
+             str(d / 'markitdown.md'), str(d / 'out')])
+    text = out_text(r)
+    md_file = d / 'out' / 'demo.md'
+    md = md_file.read_text(encoding='utf-8') if md_file.is_file() else ''
+    img = d / 'out' / 'assets' / 'demo-image-1.png'
+    check('overlay: exit 0', r.returncode == 0, text[-500:])
+    check('overlay: md 引用標注後的 PNG',
+          '![demo-image-1](<assets/demo-image-1.png>)' in md, md)
+    check('overlay: 標注圖存在', img.is_file())
+    if '找不到可用的 CJK 字型' in text:
+        if sys.platform.startswith('linux'):
+            check('overlay: Linux 應找得到 CJK 字型完成標注', False, text[-400:])
+        else:
+            skip('overlay: 像素驗證', '本機找不到 CJK 字型')
+    else:
+        from PIL import Image  # 僅在 Pillow 可用時載入
+        with Image.open(img) as annotated:
+            raw = annotated.convert('RGB').tobytes()
+        white = b'\xff\xff\xff'
+        check('overlay: 圖片已繪入文字（像素改變）',
+              any(raw[i:i + 3] != white for i in range(0, len(raw), 3)))
+    # 2) DOC2MD_FONT 指向不存在的字型 → 警告、跳過標注、原圖不動、exit 0
+    d2 = tmp / 'overlay2'
+    d2.mkdir()
+    build_group_docx(d2 / 'demo.docx', 'image1.png', src)
+    write_md(d2 / 'markitdown.md', 1)
+    r = run([sys.executable, str(MERGE), str(d2 / 'demo.docx'),
+             str(d2 / 'markitdown.md'), str(d2 / 'out')],
+            env={'DOC2MD_FONT': str(tmp / 'no-such-font.ttf')})
+    text = out_text(r)
+    img2 = d2 / 'out' / 'assets' / 'demo-image-1.png'
+    check('overlay: 字型無效時警告、exit 0、原圖不變',
+          r.returncode == 0 and '字型' in text and img2.is_file()
+          and img2.read_bytes() == src, text[-400:])
+
+
 def test_doc2md(tmp: Path) -> None:
-    # 1) docx 全管線（需 markitdown；缺席跳過）
-    if not tool_discoverable('markitdown') and not _module_available('markitdown'):
+    # 1) docx 全管線（需 markitdown 與 Pillow；缺席跳過）
+    if not pillow_available():
+        skip('doc-to-md: docx 全管線', '本機沒有 Pillow（本 skill 必要依賴）')
+    elif not tool_discoverable('markitdown') and not _module_available('markitdown'):
         skip('doc-to-md: docx 全管線', '本機找不到 markitdown')
     else:
         d = tmp / 'pipeline'
@@ -229,6 +382,17 @@ def test_doc2md(tmp: Path) -> None:
         check('doc-to-md: 成功時印出 md 路徑',
               last_line[0].endswith('fixture.md'),
               r.stdout.decode('utf-8', 'replace')[-200:])
+        # 1b) 群組示意圖全管線：標注 PNG＋圖下文字仍在（mammoth 讀 Fallback 分支）
+        d2 = tmp / 'pipeline-group'
+        d2.mkdir()
+        build_group_docx(d2 / 'group.docx', 'image2.png', solid_png(80, 80))
+        r = run([sys.executable, str(DOC2MD), str(d2 / 'group.docx')])
+        md2_file = d2 / 'group' / 'group.md'
+        md2 = md2_file.read_text(encoding='utf-8') if md2_file.is_file() else ''
+        check('doc-to-md: 群組示意圖管線（標注 PNG、圖下文字仍在）',
+              r.returncode == 0
+              and '![group-image-1](<assets/group-image-1.png>)' in md2
+              and '標籤文字' in md2, (out_text(r)[-300:] + md2))
     # 2) soffice 缺席 → exit 1、含安裝指引、無 traceback（以空 PATH 確定性觸發；常見安裝位置有 soffice 時跳過）
     if common_tool_location('soffice'):
         skip('doc-to-md: soffice 缺席指引', '本機常見安裝位置可找到 soffice')
@@ -257,6 +421,19 @@ def test_doc2md(tmp: Path) -> None:
     check('doc-to-md: markitdown 缺席 exit 1、含安裝指令、無 traceback',
           r.returncode == 1 and 'markitdown' in text and 'uv tool install' in text
           and 'Traceback' not in text, text[-400:])
+    # 4) Pillow 缺席 → exit 1、含安裝指令、無 traceback
+    #    （-S 跳過 site-packages 確定性觸發；需確定 markitdown 檢查會先通過）
+    if not tool_discoverable('markitdown'):
+        skip('doc-to-md: Pillow 缺席指引', '本機找不到 markitdown，無法越過前一關')
+        return
+    d = tmp / 'absent-pillow'
+    d.mkdir()
+    build_docx(d / 'fixture.docx', 'image1.png', PNG_1PX)
+    r = run([sys.executable, '-S', str(DOC2MD), str(d / 'fixture.docx')])
+    text = out_text(r)
+    check('doc-to-md: Pillow 缺席 exit 1、含安裝指令、無 traceback',
+          r.returncode == 1 and 'Pillow' in text and 'pip install' in text
+          and 'Traceback' not in text, text[-400:])
 
 
 def _module_available(name: str) -> bool:
@@ -272,6 +449,7 @@ def main() -> int:
         tmp = Path(td)
         test_blooket(tmp)
         test_merge(tmp)
+        test_overlay(tmp)
         test_doc2md(tmp)
     print(f'\n通過 {len(PASSED)}、失敗 {len(FAILED)}、跳過 {len(SKIPPED)}')
     if FAILED:

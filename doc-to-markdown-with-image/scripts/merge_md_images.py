@@ -11,10 +11,15 @@
   r:embed/r:id 引用順序（跳過 mc:Fallback 避免重複），把第 k 個佔位符
   換成第 k 張圖：`![<stem>-image-k](assets/<stem>-image-k.<ext>)`。
 
+  群組示意圖（wpg:wgp：一張底圖＋多個帶座標文字方塊）的圖內文字另由
+  annotate_images 繪回底圖（覆蓋原檔、一律存 PNG，md 引用同步改副檔名），
+  讓讀者能把文字對回圖上位置；圖下文字不動，仍是 agent 的可靠來源。
+
   `.emf/.wmf` 向量圖另以 soffice 轉高解析 png（原檔保留在 assets 備查），
   md 引用指向 png；轉換失敗時引用維持原格式。
 
-  只用 Python 標準庫，不需任何第三方套件。
+  docx 解析見 _docx.py；標注需 Pillow（本 skill 必要依賴，見
+  docs/adr/0005-doc2md-pillow-annotated-images.md），缺 Pillow 即失敗。
 
 驗證:
   佔位符數 ≠ 引用數時仍完成對位（多出的佔位符保留原樣），
@@ -30,7 +35,9 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import annotate_images  # noqa: E402
 from _compat import find_tool, use_utf8_stdio  # noqa: E402
+from _docx import group_text_boxes, image_refs  # noqa: E402
 
 PNG_FILTER = ('png:draw_png_Export:{"PixelWidth":{"type":"long","value":1600},'
               '"PixelHeight":{"type":"long","value":2200}}')
@@ -77,6 +84,10 @@ def main() -> int:
         return 1
     docx, md_src, outdir = sys.argv[1], sys.argv[2], sys.argv[3].rstrip('/\\')
     stem = os.path.splitext(os.path.basename(docx))[0]
+    if not annotate_images.available():
+        print('需要 Pillow（群組示意圖文字標注）: python3 -m pip install pillow'
+              '（Windows: py -3 -m pip install pillow）', file=sys.stderr)
+        return 1
     assets = os.path.join(outdir, 'assets')
     os.makedirs(assets, exist_ok=True)
 
@@ -85,21 +96,9 @@ def main() -> int:
         xml = z.read('word/document.xml').decode('utf-8')
         rels = z.read('word/_rels/document.xml.rels').decode('utf-8')
         rmap = dict(re.findall(r'Id="(rId\d+)"[^>]*Target="(media/[^"]+)"', rels))
-        refs = []  # [(rId, media/xxx), ...] 依 body 順序
-        i = 0
-        while i < len(xml):
-            fb = xml.find('<mc:Fallback>', i)
-            seg_end = fb if fb != -1 else len(xml)
-            for m in re.finditer(r'(?:r:embed|r:id)="(rId\d+)"', xml[i:seg_end]):
-                rid = m.group(1)
-                if rid in rmap:
-                    refs.append((rid, rmap[rid]))
-            if fb == -1:
-                break
-            end = xml.find('</mc:Fallback>', fb)
-            i = end + len('</mc:Fallback>') if end != -1 else len(xml)
+        refs = image_refs(xml, rmap)
 
-        # ---- 2. 抽出 media 至 assets/，並依引用順序改名 ----
+        # ---- 2a. 抽出 media 至 assets/，並依引用順序改名 ----
         media_files = sorted(set(
             n for n in z.namelist() if n.startswith('word/media/')))
         for n in media_files:
@@ -133,6 +132,32 @@ def main() -> int:
         emf_png_map.get(name, name) if name and name.lower().endswith(meta_ext) else name
         for name in ref_names
     ]
+
+    # ---- 2c. 群組示意圖文字標注（覆蓋原檔、一律 PNG；同一 media 只標注一次）----
+    annotations, astats = group_text_boxes(xml)
+    by_media = {}  # media/xxx -> 最終檔名
+    for k, (rid, media) in enumerate(refs, 1):
+        name = ref_names[k - 1]
+        if name is None:
+            continue
+        if media in by_media:
+            ref_names[k - 1] = by_media[media]
+            continue
+        group = annotations.get(rid)
+        if group is not None:
+            annotated = annotate_images.annotate(os.path.join(assets, name), group)
+            if annotated is not None:
+                if annotated != name:
+                    old = os.path.join(assets, name)
+                    if os.path.exists(old):
+                        os.remove(old)  # 覆蓋式輸出：不留原始底圖檔
+                name = annotated
+        by_media[media] = name
+        ref_names[k - 1] = name
+    if astats['skipped']:
+        print(f'警告: {astats["skipped"]} 個文字方塊未標注（不在可標注的群組中：'
+              '無底圖／多底圖／旋轉不支援／群組外獨立方塊），文字仍保留在 md',
+              file=sys.stderr)
 
     # ---- 3. 改寫 md：先拆相鄰佔位符，再依序換引用 ----
     with open(md_src, encoding='utf-8') as f:

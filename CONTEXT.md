@@ -22,6 +22,18 @@ _Avoid_: 清理、修正、cleanup
 pandoc 讀不了舊版 .doc 時，先用 LibreOffice 把 .doc 轉成 .docx 的前置步驟。
 _Avoid_: 格式轉換、格式橋接
 
+**群組示意圖**（grouped diagram）:
+Word 文件中以群組構成的示意圖，一張底圖疊上多個帶座標的文字方塊；底圖與文字方塊在檔案結構上是分開的。
+_Avoid_: 組合圖、圖組、示意圖群組
+
+**圖內文字**（in-image text）:
+群組示意圖中由文字方塊承載、不屬於底圖像素內容的文字。
+_Avoid_: 圖說、方塊字、圖中字
+
+**標注圖**（annotated image）:
+已把圖內文字繪回底圖原位置的媒體資產，也就是 md 實際引用的圖檔。
+_Avoid_: 疊字圖、合成圖、annotated 圖
+
 ### GimKit 選擇題出題
 
 **核心概念**（key concept）:

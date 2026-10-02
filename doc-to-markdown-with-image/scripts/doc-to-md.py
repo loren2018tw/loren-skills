@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """將 Word 文件（.docx / 舊版 .doc）轉成 markdown，抽出圖片為媒體資產。
 
-管線: [soffice 橋接] → markitdown 全文（圖=佔位符）→ merge_md_images.py 還原圖檔
+管線: [soffice 橋接] → markitdown 全文（圖=佔位符）→ merge_md_images.py 還原
+      圖檔並標注群組示意圖文字
 用法: doc-to-md.py <來源文件> [輸出資料夾]
 
 直譯器呼叫（見 SKILL.md）：Windows 用 py -3、macOS/Linux 用 python3。
-只用 Python 標準庫；.docx 不需 soffice（.doc 橋接與 emf/wmf 轉檔才需要）。
+僅以標準庫呼叫外部工具；圖內文字標注需要 Pillow（見 docs/adr/0005）。
+.docx 不需 soffice（.doc 橋接與 emf/wmf 轉檔才需要）。
 """
 import importlib.util
 import subprocess
@@ -59,6 +61,11 @@ def main(argv):
     if markitdown_cmd is None:
         return fail("需要 markitdown: uv tool install 'markitdown[docx]'"
                     "（或 pip install 'markitdown[docx]'）")
+
+    # 標注圖內文字需要 Pillow（本 skill 必要依賴，見 docs/adr/0005）
+    if importlib.util.find_spec('PIL') is None:
+        return fail('需要 Pillow（群組示意圖文字標注）: python3 -m pip install pillow'
+                    '（Windows: py -3 -m pip install pillow）')
 
     outdir = Path(argv[2]) if len(argv) == 3 else src.parent / stem
     outdir.mkdir(parents=True, exist_ok=True)

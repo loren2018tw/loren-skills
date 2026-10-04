@@ -10,7 +10,7 @@ Five canonical roles with label strings equal to their names. See `docs/agents/t
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ### 跨平台腳本不變式
 

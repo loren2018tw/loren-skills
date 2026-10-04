@@ -1,7 +1,7 @@
 # Question design
 
 Rules for extracting key concepts and key words, writing stems, and sourcing
-distractors. Terms used here are defined in the repo CONTEXT.md: key
+distractors. Terms used here are defined in the repo GLOSSARY.md: key
 concept, key word, one-answer-many-questions, property question, word
 question, mixed question generation, distractor.
 

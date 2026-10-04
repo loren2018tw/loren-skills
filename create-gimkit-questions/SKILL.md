@@ -17,7 +17,7 @@ Before extracting concepts or writing questions, read
 [question design](references/question-design.md). Before writing the CSV
 file, also read [CSV format](references/gimkit-csv-format.md).
 
-Domain vocabulary lives in the repo CONTEXT.md under "GimKit 選擇題出題":
+Domain vocabulary lives in the repo GLOSSARY.md under "GimKit 選擇題出題":
 key concept, key word, one-answer-many-questions, property question, word
 question, mixed question generation, distractor.
 

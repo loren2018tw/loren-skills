@@ -12,7 +12,7 @@ description: 把 GimKit 匯出的題庫 CSV（Question, Correct Answer, Incorrec
 動筆前先讀 [Blooket CSV 格式](references/blooket-csv-format.md):
 來源與輸出欄位對照、Blooket 前端解析規則、檔案細節與驗證標準。
 
-領域詞彙在 repo CONTEXT.md 的「GimKit 轉 Blooket」一節:
+領域詞彙在 repo GLOSSARY.md 的「GimKit 轉 Blooket」一節:
 匯入範本、正解位置、正解位置輪替、匯入前驗證。
 
 ## 工作流程

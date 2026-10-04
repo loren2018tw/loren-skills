@@ -1,6 +1,6 @@
 # loren-skills
 
-本 repo 是 agent skills 的集合，每個目錄是一個獨立 skill。此 CONTEXT.md 按技能分組收錄各領域的共用術語。
+本 repo 是 agent skills 的集合，每個目錄是一個獨立 skill。此 GLOSSARY.md 按技能分組收錄各領域的共用術語。
 
 ## Language
 

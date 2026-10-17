@@ -1,0 +1,4 @@
+interface:
+  display_name: "GimKit to Kahoot"
+  short_description: "Convert a GimKit quiz CSV into a Kahoot import .xlsx"
+  default_prompt: "Use $gimkit-to-kahoot to convert this GimKit CSV into a Kahoot import file."

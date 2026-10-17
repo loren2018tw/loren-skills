@@ -6,9 +6,10 @@
 涵蓋（不需重量級依賴；docx 全管線需 markitdown、標注驗證需 Pillow＋CJK 字型，
 缺席時跳過對應段）:
   1. gimkit-to-blooket 轉換：成功輸出、逐題正確、CP950 pipe 不崩、來源錯誤 exit 1
-  2. merge_md_images：成功對位、數量不符 exit 2、emf 轉檔失敗警告不崩
-  3. annotate_images：群組示意圖文字繪回圖檔、字型無效時警告且原圖不動
-  4. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback、
+  2. gimkit-to-kahoot 轉換：xlsx 產出（表頭列位、逐題正確）、警告與 exit 1 邊界
+  3. merge_md_images：成功對位、數量不符 exit 2、emf 轉檔失敗警告不崩
+  4. annotate_images：群組示意圖文字繪回圖檔、字型無效時警告且原圖不動
+  5. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback、
      Pillow 缺席 exit 1 含安裝指令無 traceback
 
 只用 Python 標準庫（Pillow 僅在可用時做像素驗證）；fixture（CSV、docx）在測試中
@@ -21,6 +22,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 import zipfile
 import zlib
 from pathlib import Path
@@ -32,6 +34,7 @@ from _compat import common_tool_location, find_tool, use_utf8_stdio  # noqa: E40
 use_utf8_stdio()  # 測試自身的輸出也要 UTF-8（Windows CI 的 pipe 預設 cp1252）
 
 BLOOKET = ROOT / 'gimkit-to-blooket' / 'scripts' / 'convert_to_blooket.py'
+KAHOOT = ROOT / 'gimkit-to-kahoot' / 'scripts' / 'convert_to_kahoot.py'
 MERGE = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'merge_md_images.py'
 DOC2MD = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'doc-to-md.py'
 
@@ -275,6 +278,101 @@ def test_blooket(tmp: Path) -> None:
           r.returncode == 1 and '檢查未通過' in out_text(r), out_text(r)[-300:])
 
 
+NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+
+KAHOOT_HEADER = {
+    'B': 'Question - 120 max length',
+    'C': 'Answer 1 - 75 max length',
+    'D': 'Answer 2 - 75 max length',
+    'E': 'Answer 3 - 75 max length',
+    'F': 'Answer 4 - 75 max length',
+    'G': 'Time limit',
+    'H': 'Correct answer(s)',
+}
+
+
+def read_kahoot_cells(path: Path) -> dict[int, dict[str, str]]:
+    """重讀轉換腳本產出的 xlsx 工作表，回傳 {列號: {欄名: 值}}（標準庫解析）。"""
+    with zipfile.ZipFile(path) as z:
+        root = ET.fromstring(z.read('xl/worksheets/sheet1.xml'))
+    table = {}
+    for row in root.iter(f'{NS}row'):
+        cells = {}
+        for cell in row:
+            col = ''.join(ch for ch in cell.get('r') if ch.isalpha())
+            if cell.get('t') == 'inlineStr':
+                node = cell.find(f'{NS}is/{NS}t')
+            else:
+                node = cell.find(f'{NS}v')
+            cells[col] = node.text if node is not None and node.text else ''
+        table[int(row.get('r'))] = cells
+    return table
+
+
+def test_kahoot(tmp: Path) -> None:
+    rows = write_gimkit_csv(tmp / 'kahoot-src.csv')
+    out = tmp / 'kahoot-out.xlsx'
+    # 1) 成功（同時驗證 CP950 pipe 不崩：zh-TW Windows 的預設 pipe 編碼）
+    r = run([sys.executable, str(KAHOOT), str(tmp / 'kahoot-src.csv'), '-o', str(out)],
+            env={'PYTHONIOENCODING': 'cp950'})
+    check('kahoot: exit 0', r.returncode == 0, out_text(r)[-500:])
+    try:
+        stdout = r.stdout.decode('utf-8')
+    except UnicodeDecodeError as e:
+        stdout = ''
+        check('kahoot: stdout 可解為 UTF-8（CP950 pipe 不崩）', False, str(e))
+    else:
+        check('kahoot: stdout 可解為 UTF-8（CP950 pipe 不崩）', True)
+    check('kahoot: 驗證訊息存在', '通過' in stdout, stdout[-300:])
+    if out.is_file():
+        table = read_kahoot_cells(out)
+        check('kahoot: 表頭位於第 8 列且與官方模板一致',
+              table.get(8) == KAHOOT_HEADER, str(table.get(8)))
+        ok = sorted(table) == [8, 9, 10]  # 表頭第 8 列 + 2 題自第 9 列起
+        for i, src_row in enumerate(rows[1:], start=1):
+            cells = table.get(8 + i, {})
+            pos = int(cells.get('H') or 0)
+            ok = ok and cells.get('A') == str(i) and cells.get('B') == src_row[0]
+            ok = ok and 1 <= pos <= 4
+            ok = ok and sorted(cells.get(c, '') for c in 'CDEF') == sorted(src_row[1:5])
+            ok = ok and [cells.get(c) for c in 'CDEF'][pos - 1] == src_row[1]
+            ok = ok and cells.get('G') == '20'
+        check('kahoot: 輸出逐題正確（正解欄號、選項集合、Time limit）', ok, str(table))
+    else:
+        check('kahoot: 輸出檔存在', False, '找不到 ' + str(out))
+    # 2) 來源錯誤 → exit 1
+    bad = tmp / 'kahoot-bad.csv'
+    bad.write_text('Question,Correct Answer\n只有一題,而且缺欄\n', encoding='utf-8')
+    r = run([sys.executable, str(KAHOOT), str(bad)])
+    check('kahoot: 來源錯誤 exit 1 且訊息含「檢查未通過」',
+          r.returncode == 1 and '檢查未通過' in out_text(r), out_text(r)[-300:])
+    # 3) 非官方時間值與非 .xlsx 輸出一律 exit 1
+    r = run([sys.executable, str(KAHOOT), str(tmp / 'kahoot-src.csv'), '--time', '15'])
+    check('kahoot: --time 非官方值 exit 1', r.returncode == 1 and '--time' in out_text(r),
+          out_text(r)[-200:])
+    r = run([sys.executable, str(KAHOOT), str(tmp / 'kahoot-src.csv'), '-o', str(tmp / 'out.csv')])
+    check('kahoot: 非 .xlsx 輸出 exit 1', r.returncode == 1 and '.xlsx' in out_text(r),
+          out_text(r)[-200:])
+    # 4) 字數超限 → 警告、exit 0、內容不截斷
+    longq = tmp / 'kahoot-long.csv'
+    with open(longq, 'w', newline='', encoding='utf-8') as f:
+        csv.writer(f).writerows([rows[0], ['測' * 121, '正解', '錯一', '錯二', '錯三']])
+    long_out = tmp / 'kahoot-long.xlsx'
+    r = run([sys.executable, str(KAHOOT), str(longq), '-o', str(long_out)])
+    check('kahoot: 題目超長僅警告、exit 0、內容不截斷',
+          r.returncode == 0 and '警告' in out_text(r)
+          and read_kahoot_cells(long_out).get(9, {}).get('B') == '測' * 121,
+          out_text(r)[-300:])
+    # 5) 題數超過 Kahoot 上限 → exit 1
+    many = tmp / 'kahoot-many.csv'
+    with open(many, 'w', newline='', encoding='utf-8') as f:
+        csv.writer(f).writerows([rows[0]]
+                                + [[f'題{i}', '正解', '錯一', '錯二', '錯三'] for i in range(201)])
+    r = run([sys.executable, str(KAHOOT), str(many)])
+    check('kahoot: 超過 200 題 exit 1',
+          r.returncode == 1 and '200' in out_text(r), out_text(r)[-200:])
+
+
 def test_merge(tmp: Path) -> None:
     if not pillow_available():
         skip('merge: 全套', '本機沒有 Pillow（本 skill 必要依賴）')
@@ -448,6 +546,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix='skill-smoke-') as td:
         tmp = Path(td)
         test_blooket(tmp)
+        test_kahoot(tmp)
         test_merge(tmp)
         test_overlay(tmp)
         test_doc2md(tmp)

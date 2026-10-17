@@ -1,6 +1,6 @@
 ---
 name: gimkit-to-kahoot
-description: 把 GimKit 匯出的題庫 CSV（Question, Correct Answer, Incorrect 1-3）轉換為可直接上傳匯入 Kahoot 的 .xlsx 試算表，含官方模板版面（表頭第 8 列、資料第 9 列起）、Time limit（預設 20 秒）、正解位置輪替與匯入前驗證。當使用者要「轉成 Kahoot」「匯入 Kahoot」「GimKit 轉 Kahoot」「題庫轉 Kahoot 格式」「quiz CSV 轉 kahoot」或提到要幫 Kahoot 建題庫時載入。不要用於 Blooket、Quizizz（Wayground）等其他平台格式；Kahoot 沒有 CSV 匯入管道，產物固定為 .xlsx。
+description: 把 GimKit 匯出的題庫 CSV（Question, Correct Answer, Incorrect 1-3）轉換為可直接上傳匯入 Kahoot 的 .xlsx 試算表，含官方模板版面（表頭第 8 列、資料第 9 列起）、Time limit（預設 20 秒）、正解位置輪替與匯入前驗證。當使用者要「轉成 Kahoot」「匯入 Kahoot」「GimKit 轉 Kahoot」「題庫轉 Kahoot 格式」「quiz CSV 轉 kahoot」或提到要幫 Kahoot 建題庫時載入。不要用於 Blooket（gimkit-to-blooket）、Wayground／Quizizz（gimkit-to-wayground）等其他平台格式；Kahoot 沒有 CSV 匯入管道，產物固定為 .xlsx。
 ---
 
 # GimKit → Kahoot 轉換

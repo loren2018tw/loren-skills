@@ -1,0 +1,4 @@
+interface:
+  display_name: "GimKit to Wayground"
+  short_description: "Convert a GimKit quiz CSV into a Wayground import .xlsx"
+  default_prompt: "Use $gimkit-to-wayground to convert this GimKit CSV into a Wayground import file."

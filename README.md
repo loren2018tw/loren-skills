@@ -10,6 +10,7 @@ Loren 自製的 agent 技能收藏倉。
 - **create-gimkit-questions**: 把文本、筆記、文件轉成 GimKit 可匯入的四選一單選題 CSV。
 - **gimkit-to-blooket**: 把 GimKit 匯出的題庫 CSV 轉成 Blooket 官方匯入範本格式（含 Time Limit、正解位置輪替與匯入前驗證）。
 - **gimkit-to-kahoot**: 把 GimKit 匯出的題庫 CSV 轉成 Kahoot 匯入用的 .xlsx（官方模板版面、Time limit、正解位置輪替與匯入前驗證）。
+- **gimkit-to-wayground**: 把 GimKit 匯出的題庫 CSV 轉成 Wayground（原 Quizizz）匯入用的 .xlsx（官方範本版面、Time in seconds、正解位置輪替與匯入前驗證）。
 - **create-flashcards**: 在 Obsidian 筆記內建立有效的 Anki 記憶卡（Flashcards plugin v2 語法）。
 
 > 技能內腳本官方支援 Linux 與 Windows；macOS 為 best-effort（可用但未經 CI 驗證）。

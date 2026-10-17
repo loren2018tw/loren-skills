@@ -67,12 +67,16 @@ _Avoid_: 字音字形題、釋義題
 ### 題庫格式轉換（GimKit 匯出）
 
 **正解位置**（correct answer position）:
-匯入檔中以數字 1~4 標示正解落在第幾個答案欄（Blooket 填在第 8 欄、Kahoot 填在第 H 欄），不是答案文字。
+匯入檔中以數字標示正解落在第幾個答案欄（Blooket 填在第 8 欄、Kahoot 與 Wayground 填在第 H 欄），不是答案文字。
 _Avoid_: 答案編號、正解欄、正解欄號
 
 **正解位置輪替**（position rotation）:
 逐題把正解依 1→2→3→4 順序放進不同的答案欄位，避免正解集中在同一位置。
 _Avoid_: 隨機打散、洗牌
+
+**範本列位**（template offsets）:
+匯入範本中表頭列與資料起始列的固定位置（Kahoot：表頭第 8 列、資料第 9 列起；Wayground：表頭第 1 列、第 2 列說明列留空、資料第 3 列起）。
+_Avoid_: 版面配置、列位移、欄位配置
 
 **匯入前驗證**（pre-import verification）:
 輸出後由程式重讀產物、模擬平台解析規則並逐題與來源比對的檢查。
@@ -83,12 +87,6 @@ _Avoid_: 自我檢查、測試
 **匯入範本**（import template）:
 Blooket 官方提供的 CSV 上傳格式，前兩列（標題列＋欄名列）會被前端解析跳過。
 _Avoid_: 範本檔、官方格式
-
-### GimKit 轉 Kahoot
-
-**範本列位**（template offsets）:
-Kahoot 匯入範本的固定版面——表頭在第 8 列、資料自第 9 列起，前 7 列不參與匯入。
-_Avoid_: 版面配置、列位移、欄位配置
 
 ### 技能安裝
 

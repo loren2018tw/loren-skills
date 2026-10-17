@@ -7,9 +7,10 @@
 缺席時跳過對應段）:
   1. gimkit-to-blooket 轉換：成功輸出、逐題正確、CP950 pipe 不崩、來源錯誤 exit 1
   2. gimkit-to-kahoot 轉換：xlsx 產出（表頭列位、逐題正確）、警告與 exit 1 邊界
-  3. merge_md_images：成功對位、數量不符 exit 2、emf 轉檔失敗警告不崩
-  4. annotate_images：群組示意圖文字繪回圖檔、字型無效時警告且原圖不動
-  5. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback、
+  3. gimkit-to-wayground 轉換：xlsx 產出（工作表名、表頭列位、逐題正確）、exit 1 邊界
+  4. merge_md_images：成功對位、數量不符 exit 2、emf 轉檔失敗警告不崩
+  5. annotate_images：群組示意圖文字繪回圖檔、字型無效時警告且原圖不動
+  6. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback、
      Pillow 缺席 exit 1 含安裝指令無 traceback
 
 只用 Python 標準庫（Pillow 僅在可用時做像素驗證）；fixture（CSV、docx）在測試中
@@ -35,6 +36,7 @@ use_utf8_stdio()  # 測試自身的輸出也要 UTF-8（Windows CI 的 pipe 預�
 
 BLOOKET = ROOT / 'gimkit-to-blooket' / 'scripts' / 'convert_to_blooket.py'
 KAHOOT = ROOT / 'gimkit-to-kahoot' / 'scripts' / 'convert_to_kahoot.py'
+WAYGROUND = ROOT / 'gimkit-to-wayground' / 'scripts' / 'convert_to_wayground.py'
 MERGE = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'merge_md_images.py'
 DOC2MD = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'doc-to-md.py'
 
@@ -290,9 +292,23 @@ KAHOOT_HEADER = {
     'H': 'Correct answer(s)',
 }
 
+WAYGROUND_HEADER = {
+    'A': 'Question Text',
+    'B': 'Question Type',
+    'C': 'Option 1',
+    'D': 'Option 2',
+    'E': 'Option 3',
+    'F': 'Option 4',
+    'G': 'Option 5',
+    'H': 'Correct Answer',
+    'I': 'Time in seconds',
+    'J': 'Image Link',
+    'K': 'Answer explanation',
+}
 
-def read_kahoot_cells(path: Path) -> dict[int, dict[str, str]]:
-    """重讀轉換腳本產出的 xlsx 工作表，回傳 {列號: {欄名: 值}}（標準庫解析）。"""
+
+def read_sheet_cells(path: Path) -> dict[int, dict[str, str]]:
+    """重讀轉換腳本產出的 xlsx 第一張工作表，回傳 {列號: {欄名: 值}}（標準庫解析）。"""
     with zipfile.ZipFile(path) as z:
         root = ET.fromstring(z.read('xl/worksheets/sheet1.xml'))
     table = {}
@@ -307,6 +323,13 @@ def read_kahoot_cells(path: Path) -> dict[int, dict[str, str]]:
             cells[col] = node.text if node is not None and node.text else ''
         table[int(row.get('r'))] = cells
     return table
+
+
+def read_sheet_name(path: Path) -> str:
+    """重讀產出 xlsx 的第一張工作表名。"""
+    with zipfile.ZipFile(path) as z:
+        wb = ET.fromstring(z.read('xl/workbook.xml'))
+    return next(wb.iter(f'{NS}sheet')).get('name')
 
 
 def test_kahoot(tmp: Path) -> None:
@@ -325,7 +348,7 @@ def test_kahoot(tmp: Path) -> None:
         check('kahoot: stdout 可解為 UTF-8（CP950 pipe 不崩）', True)
     check('kahoot: 驗證訊息存在', '通過' in stdout, stdout[-300:])
     if out.is_file():
-        table = read_kahoot_cells(out)
+        table = read_sheet_cells(out)
         check('kahoot: 表頭位於第 8 列且與官方模板一致',
               table.get(8) == KAHOOT_HEADER, str(table.get(8)))
         ok = sorted(table) == [8, 9, 10]  # 表頭第 8 列 + 2 題自第 9 列起
@@ -361,7 +384,7 @@ def test_kahoot(tmp: Path) -> None:
     r = run([sys.executable, str(KAHOOT), str(longq), '-o', str(long_out)])
     check('kahoot: 題目超長僅警告、exit 0、內容不截斷',
           r.returncode == 0 and '警告' in out_text(r)
-          and read_kahoot_cells(long_out).get(9, {}).get('B') == '測' * 121,
+          and read_sheet_cells(long_out).get(9, {}).get('B') == '測' * 121,
           out_text(r)[-300:])
     # 5) 題數超過 Kahoot 上限 → exit 1
     many = tmp / 'kahoot-many.csv'
@@ -371,6 +394,55 @@ def test_kahoot(tmp: Path) -> None:
     r = run([sys.executable, str(KAHOOT), str(many)])
     check('kahoot: 超過 200 題 exit 1',
           r.returncode == 1 and '200' in out_text(r), out_text(r)[-200:])
+
+
+def test_wayground(tmp: Path) -> None:
+    rows = write_gimkit_csv(tmp / 'wg-src.csv')
+    out = tmp / 'wg-out.xlsx'
+    # 1) 成功（同時驗證 CP950 pipe 不崩：zh-TW Windows 的預設 pipe 編碼）
+    r = run([sys.executable, str(WAYGROUND), str(tmp / 'wg-src.csv'), '-o', str(out)],
+            env={'PYTHONIOENCODING': 'cp950'})
+    check('wayground: exit 0', r.returncode == 0, out_text(r)[-500:])
+    try:
+        stdout = r.stdout.decode('utf-8')
+    except UnicodeDecodeError as e:
+        stdout = ''
+        check('wayground: stdout 可解為 UTF-8（CP950 pipe 不崩）', False, str(e))
+    else:
+        check('wayground: stdout 可解為 UTF-8（CP950 pipe 不崩）', True)
+    check('wayground: 驗證訊息存在', '通過' in stdout, stdout[-300:])
+    if out.is_file():
+        table = read_sheet_cells(out)
+        check('wayground: 工作表名為 Create a Quiz', read_sheet_name(out) == 'Create a Quiz')
+        check('wayground: 表頭位於第 1 列且與官方範本一致',
+              table.get(1) == WAYGROUND_HEADER, str(table.get(1)))
+        ok = sorted(table) == [1, 3, 4]  # 表頭第 1 列、第 2 列留空、2 題自第 3 列起
+        for i, src_row in enumerate(rows[1:], start=1):
+            cells = table.get(2 + i, {})
+            pos = int(cells.get('H') or 0)
+            ok = ok and cells.get('A') == src_row[0]
+            ok = ok and cells.get('B') == 'Multiple Choice'
+            ok = ok and 1 <= pos <= 4
+            ok = ok and sorted(cells.get(c, '') for c in 'CDEF') == sorted(src_row[1:5])
+            ok = ok and [cells.get(c) for c in 'CDEF'][pos - 1] == src_row[1]
+            ok = ok and cells.get('I') == '30'
+            ok = ok and not any(cells.get(col) for col in ('G', 'J', 'K'))
+        check('wayground: 輸出逐題正確（題型、正解欄號、選項集合、秒數、留空欄）', ok, str(table))
+    else:
+        check('wayground: 輸出檔存在', False, '找不到 ' + str(out))
+    # 2) 來源錯誤 → exit 1
+    bad = tmp / 'wg-bad.csv'
+    bad.write_text('Question,Correct Answer\n只有一題,而且缺欄\n', encoding='utf-8')
+    r = run([sys.executable, str(WAYGROUND), str(bad)])
+    check('wayground: 來源錯誤 exit 1 且訊息含「檢查未通過」',
+          r.returncode == 1 and '檢查未通過' in out_text(r), out_text(r)[-300:])
+    # 3) 非範本時間值與非 .xlsx 輸出一律 exit 1
+    r = run([sys.executable, str(WAYGROUND), str(tmp / 'wg-src.csv'), '--time', '15'])
+    check('wayground: --time 非範本值 exit 1', r.returncode == 1 and '--time' in out_text(r),
+          out_text(r)[-200:])
+    r = run([sys.executable, str(WAYGROUND), str(tmp / 'wg-src.csv'), '-o', str(tmp / 'out.csv')])
+    check('wayground: 非 .xlsx 輸出 exit 1', r.returncode == 1 and '.xlsx' in out_text(r),
+          out_text(r)[-200:])
 
 
 def test_merge(tmp: Path) -> None:
@@ -547,6 +619,7 @@ def main() -> int:
         tmp = Path(td)
         test_blooket(tmp)
         test_kahoot(tmp)
+        test_wayground(tmp)
         test_merge(tmp)
         test_overlay(tmp)
         test_doc2md(tmp)

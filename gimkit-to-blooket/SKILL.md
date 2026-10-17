@@ -1,6 +1,6 @@
 ---
 name: gimkit-to-blooket
-description: 把 GimKit 匯出的題庫 CSV（Question, Correct Answer, Incorrect 1-3）轉換為可直接上傳匯入 Blooket 遊戲學習平台的官方範本格式 CSV，含每題 Time Limit（預設 30 秒）、正解位置輪替打散與匯入前驗證。當使用者要「轉成 Blooket」「匯入 Blooket」「GimKit 轉 Blooket」「題庫轉 Blooket 格式」「quiz CSV 轉 blooket」或提到要幫 Blooket 建題庫時載入。不要用於 Kahoot、Quizizz（Wayground）等其他平台格式。
+description: 把 GimKit 匯出的題庫 CSV（Question, Correct Answer, Incorrect 1-3）轉換為可直接上傳匯入 Blooket 遊戲學習平台的官方範本格式 CSV，含每題 Time Limit（預設 30 秒）、正解位置輪替打散與匯入前驗證。當使用者要「轉成 Blooket」「匯入 Blooket」「GimKit 轉 Blooket」「題庫轉 Blooket 格式」「quiz CSV 轉 blooket」或提到要幫 Blooket 建題庫時載入。不要用於 Kahoot（gimkit-to-kahoot）、Wayground／Quizizz（gimkit-to-wayground）等其他平台格式。
 ---
 
 # GimKit → Blooket CSV 轉換

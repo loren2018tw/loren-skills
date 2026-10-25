@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""技能腳本跨平台煙霧測試（CI 與本機皆可跑）。
+"""技能與 OpenCode agent 輔助腳本跨平台煙霧測試（CI 與本機皆可跑）。
 
 用法: python3 tests/script-smoke.py
 
@@ -12,6 +12,7 @@
   5. annotate_images：群組示意圖文字繪回圖檔、字型無效時警告且原圖不動
   6. doc-to-md：docx 全管線（markitdown）、soffice 缺席 exit 1 含指引無 traceback、
      Pillow 缺席 exit 1 含安裝指令無 traceback
+  7. opencode agents 輔助腳本：--help exit 0（不呼叫 API）
 
 只用 Python 標準庫（Pillow 僅在可用時做像素驗證）；fixture（CSV、docx）在測試中
 動態生成，不提交二進位檔。
@@ -39,6 +40,8 @@ KAHOOT = ROOT / 'gimkit-to-kahoot' / 'scripts' / 'convert_to_kahoot.py'
 WAYGROUND = ROOT / 'gimkit-to-wayground' / 'scripts' / 'convert_to_wayground.py'
 MERGE = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'merge_md_images.py'
 DOC2MD = ROOT / 'doc-to-markdown-with-image' / 'scripts' / 'doc-to-md.py'
+GEMINI_IMAGE = ROOT / 'opencode' / 'bin' / 'geminiimage.py'
+GPT_IMAGE = ROOT / 'opencode' / 'bin' / 'gptimage.py'
 
 PASSED = []
 FAILED = []
@@ -606,6 +609,14 @@ def test_doc2md(tmp: Path) -> None:
           and 'Traceback' not in text, text[-400:])
 
 
+def test_opencode_agents(tmp: Path) -> None:
+    for label, script in [('geminiimage', GEMINI_IMAGE), ('gptimage', GPT_IMAGE)]:
+        r = run([sys.executable, str(script), '--help'])
+        text = out_text(r)
+        check(f'opencode agent: {label} --help exit 0',
+              r.returncode == 0 and script.name in text, text[-300:])
+
+
 def _module_available(name: str) -> bool:
     try:
         return subprocess.run([sys.executable, '-c', f'import {name}'],
@@ -623,6 +634,7 @@ def main() -> int:
         test_merge(tmp)
         test_overlay(tmp)
         test_doc2md(tmp)
+        test_opencode_agents(tmp)
     print(f'\n通過 {len(PASSED)}、失敗 {len(FAILED)}、跳過 {len(SKIPPED)}')
     if FAILED:
         for name, detail in FAILED:

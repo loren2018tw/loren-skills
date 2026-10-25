@@ -88,20 +88,46 @@ _Avoid_: 自我檢查、測試
 Blooket 官方提供的 CSV 上傳格式，前兩列（標題列＋欄名列）會被前端解析跳過。
 _Avoid_: 範本檔、官方格式
 
-### 技能安裝
+### 安裝
 
 **技能目錄**（skill directory）:
-根目錄下含 SKILL.md 的一級目錄，是安裝的最小單位。
+根目錄下含 SKILL.md 的一級目錄，是技能安裝的最小單位。
 _Avoid_: 技能資料夾、skill folder
 
 **目標技能庫**（target skills directory）:
-agent 掃描技能的位置，預設 ~/.agents/skills。
+支援此目錄的 agent 掃描技能的位置，預設 ~/.agents/skills。
 _Avoid_: 安裝目錄、skills 資料夾
 
 **連結安裝**（link install）:
-在目標技能庫建立指向技能目錄的檔案系統連結（Unix symlink／Windows junction），技能內容更新即時生效。
+在目標目錄建立指向本倉庫項目的檔案系統連結：技能目錄用 symlink／junction，OpenCode agent 與輔助腳本用逐檔 symlink；內容更新即時生效。
 _Avoid_: 軟連結安裝、symlink 安裝、複製安裝
 
 **外部技能**（external skill）:
 由其他工具（vercel skills CLI）以複本安裝、非本 repo 管理的技能。
 _Avoid_: 第三方技能
+
+### OpenCode agent 安裝
+
+**OpenCode agent**（OpenCode agent）:
+以 `<名稱>.md` 定義、安裝到 OpenCode agent 目錄的自訂 assistant 設定檔。
+_Avoid_: agent 技能、subagent 設定、agent 外掛
+
+**輔助腳本**（helper script）:
+OpenCode agent 的提示詞會呼叫、隨 agent 一併安裝的 Python 腳本。
+_Avoid_: agent 腳本、工具腳本、bin 檔
+
+**OpenCode 設定根目錄**（OpenCode config root）:
+OpenCode 存放全域設定與自訂 agent 的目錄，預設 ~/.config/opencode。
+_Avoid_: opencode 安裝目錄、config 資料夾
+
+**目標 agent 目錄**（target agents directory）:
+OpenCode 設定根目錄下存放 agent 定義檔的 `agents/`。
+_Avoid_: agent 資料夾、agents 目錄
+
+**逐檔連結**（per-file link）:
+對個別 agent 或輔助腳本建立檔案連結，而不是連結整個目標目錄；目標目錄中的其他檔案不受影響。
+_Avoid_: 整目錄連結、目錄置換
+
+**安裝項目**（install item）:
+安裝腳本可辨識與選取的最小單位，目前是技能或 OpenCode agent。
+_Avoid_: 套件、模組

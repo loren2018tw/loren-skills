@@ -26,11 +26,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: pwsh 版本
         run: $PSVersionTable.PSVersion.ToString()
-      - name: junction 生命週期 smoke（pwsh）
+      - name: junction＋檔案 symlink 生命週期 smoke（pwsh）
         run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/install-smoke.ps1
       - name: install.cmd 包裝器（DryRun）
         shell: cmd
-        run: install.cmd -DryRun -Target "%TEMP%\loren-skills-cmd-test"
+        run: install.cmd -DryRun -Target "%TEMP%\loren-skills-cmd-test" -OpencodeDir "%TEMP%\loren-skills-cmd-test-opencode"
       - name: Windows PowerShell 5.1 必須乾淨失敗
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/ps51-failfast.ps1
 
